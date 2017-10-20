@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.gson.JsonArray;
@@ -28,7 +29,7 @@ public class GerenciadorJson {
 //		conexao = ConnectionManager.getInstance().getConnection();
 	}
 	
-	public void cadastrarCidade( JsonObject objCidade ) throws SQLException{
+	public String cadastrarCidade( JsonObject objCidade ) throws SQLException{
 		
 		objCidade = objCidade.getAsJsonObject("localidade");
 		
@@ -44,14 +45,11 @@ public class GerenciadorJson {
 		sb.append( objCidade.get("longitude").getAsString() );
 		sb.append("');");
 		
-		System.out.println(sb.toString());
-		
-//		Statement statement = conexao.createStatement();
-//		statement.executeUpdate( sb.toString() );
+		return sb.toString();
 		
 	}
 	
-	public void cadastrarDiaLog( JsonObject objDia ) throws SQLException, ParseException{
+	public String cadastrarDiaLog( JsonObject objDia ) throws SQLException, ParseException{
 		StringBuffer sb = new StringBuffer("INSERT INTO tbl_dia_log(dia,cidade,uf,tempo,tipo) VALUES(");
 		
 		sb.append("TO_DATE('");
@@ -73,13 +71,12 @@ public class GerenciadorJson {
 		
 		sb.append("');");
 		
-		System.out.println(sb.toString());
-		
-//		Statement statement = conexao.createStatement();
-//		statement.executeUpdate( sb.toString() );
+		return sb.toString();
 	}
 	
-	public void cadastrarResumo( JsonObject obj ) throws ParseException{
+	public List<String> cadastrarResumo( JsonObject obj ) throws ParseException{
+		
+		List<String> listaConsultas = new LinkedList<String>();
 		
 		JsonArray arrayResumo = obj.getAsJsonArray("resumo");
 		Iterator<JsonElement> iterator = arrayResumo.iterator();
@@ -135,14 +132,17 @@ public class GerenciadorJson {
 				sb.append(");");
 			}
 			
-			System.out.println(sb.toString());
+			listaConsultas.add( sb.toString() );
 			
-//			Statement statement = conexao.createStatement();
-//			statement.executeUpdate( sb.toString() );
 		}
+		
+		return listaConsultas;
 	}
 	
-	public void cadastrarHorarios( JsonObject obj ){
+	public List<String> cadastrarHorarios( JsonObject obj ){
+		
+		List<String> listaConsultas = new LinkedList<String>();
+		
 		JsonArray arrayHorario = obj.getAsJsonArray("horarios");
 		
 		Iterator<JsonElement> iterator = arrayHorario.iterator();
@@ -199,14 +199,14 @@ public class GerenciadorJson {
 						sb.append( obterValorJson( objetoJson.get("temperatura_minima"), 1 ) );
 						sb.append(");");
 						
-						System.out.println( sb.toString() );
+						listaConsultas.add( sb.toString() );
 						
-//						Statement statement = conexao.createStatement();
-//						statement.executeUpdate( sb.toString() );				
 					}
 				}
 			}
 		}
+		
+		return listaConsultas;
 		
 	}
 	
@@ -218,28 +218,6 @@ public class GerenciadorJson {
 		if( jsonElement.isJsonNull() )
 			return "NULL";
 		return "'" + new BigDecimal( jsonElement.getAsString() ).setScale(casasDecimais, RoundingMode.HALF_UP).toString().replace('.', ',') + "'";
-	}
-
-	public static void main(String[] args) throws JsonIOException, JsonSyntaxException, IOException, ClassNotFoundException, SQLException, ParseException {
-		FileSearcher searcher = new FileSearcher();
-		
-		JsonParser parser = new JsonParser();
-		
-		GerenciadorJson gerenciador = new GerenciadorJson();
-		
-		List<File> registros = searcher.obterListaMedicoes(new File("C:\\Users\\bruno\\Desktop\\teste_json"));
-		
-		for( File registro : registros ){
-			JsonObject obj = (JsonObject) parser.parse( new FileReader( registro ) );
-			
-			
-			obj.getAsJsonObject("localidade").addProperty("etiqueta", registro.getName());
-			
-			gerenciador.cadastrarCidade( obj );
-			gerenciador.cadastrarDiaLog( obj );
-			gerenciador.cadastrarResumo( obj );
-			gerenciador.cadastrarHorarios( obj );
-		}
 	}
 
 }
